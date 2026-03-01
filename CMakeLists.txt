@@ -1,28 +1,33 @@
-cmake_minimum_required(VERSION 3.10) # 4.0.0 is very futuristic; 3.10 is standard
+cmake_minimum_required(VERSION 3.10)
 project(WiTXtool C)
 
 set(CMAKE_C_STANDARD 99)
 
-# Tell the compiler where to find your .h files
-include_directories(include)
+# --- ZLIB CONFIGURATION ---
+# Disable Zlib's extra "fluff" to speed up compilation
+set(ZLIB_BUILD_EXAMPLES OFF CACHE BOOL "Build zlib examples" FORCE)
+set(SKIP_INSTALL_ALL ON CACHE BOOL "Skip zlib install rules" FORCE)
 
-# Add zlib subdirectory (assuming you have the zlib source in external/zlib)
+# Since we want a single portable .exe, we usually want the static version
+# This helps the compiler find 'zlibstatic' correctly
 add_subdirectory(external/zlib)
 
-# Define the executable and its source files
+# --- PROJECT CONFIGURATION ---
+include_directories(include)
+# Also include zlib's folder so your code can find "zlib.h"
+include_directories(external/zlib) 
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/external/zlib)
+
 add_executable(WiTXtool
     src/main.c
     src/crypto.c
     src/compress.c
 )
 
-# Link Windows-specific crypto libraries
+# --- LINKING ---
 if(WIN32)
-    # FIX: Changed 'myapp' to 'WiTXtool'
     target_link_libraries(WiTXtool PRIVATE advapi32)
 endif()
 
-# Link to the zlib target defined in your submodule
-# FIX: Changed 'myapp' to 'WiTXtool'
-# NOTE: Depending on the zlib version, the target might be 'zlibstatic' or just 'zlib'
+# Link against the static zlib target
 target_link_libraries(WiTXtool PRIVATE zlibstatic)
