@@ -1,0 +1,12 @@
+WiTXtool by 33arc
+=================
+
+a tool for extracting/repacking the .dat files for Gary Grigsby's War in the East 2 and War in the West.
+
+usage:
+
+to extract:
+WiTXtool.exe -e w_somefile.dat w_somefile
+
+to repack:
+WiTXtool.exe -r w_somefile w_somefile_repacked.dat
