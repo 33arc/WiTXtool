@@ -2,29 +2,45 @@ name: WiTXtool CI Build
 
 on:
   push:
+    # Trigger on standard pushes to master
     branches: [ "master", "main" ]
+    # ALSO trigger when you push a version tag like v1.0, v2.1, etc.
+    tags:
+      - 'v*' 
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
+    # Grant permission to create a release
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Configure CMake
-        # We tell CMake to ignore the high version requirement just in case
+      - name: Force Zlib Version Down
+        shell: pwsh
         run: |
-          cmake -B build `
-                -DCMAKE_BUILD_TYPE=Release `
-                -DZLIB_BUILD_EXAMPLES=OFF
+          $path = "external/zlib/CMakeLists.txt"
+          (Get-Content $path) -replace '4.0.0', '3.10' | Set-Content $path
 
-      - name: Build
-        run: cmake --build build --config Release
+      - name: Configure and Build
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -A Win32
+          cmake --build build --config Release
 
-      - name: Upload
-        uses: actions/upload-artifact@v4
+      # This only runs if you pushed a TAG (e.g., git push origin v1.0)
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
         with:
-          name: WiTXtool-Binary
-          path: build/Release/WiTXtool.exe
+          # Use a wildcard (**) to find the .exe anywhere in the build folder
+          files: build/**/WiTXtool.exe
+          name: WiTXtool ${{ github.ref_name }}
+          body: "Official release of WiTXtool version ${{ github.ref_name }}"
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
