@@ -4,6 +4,8 @@
 #include <string.h>
 
 #define CHUNK 16384
+// 15 is the default window size, +16 enables GZIP decoding
+#define GZIP_WINDOW_BITS (15 + 16)
 
 mem_result decompress_from_memory(const unsigned char *input, size_t input_size) {
     mem_result result = {NULL, 0, 0};
@@ -11,8 +13,7 @@ mem_result decompress_from_memory(const unsigned char *input, size_t input_size)
     strm.avail_in = (uInt)input_size;
     strm.next_in = (Bytef *)input;
 
-    // 15 + 32 enables automatic header detection (Zlib/Gzip)
-    int ret = inflateInit2(&strm, 15 + 32);
+    int ret = inflateInit2(&strm, GZIP_WINDOW_BITS);
     if (ret != Z_OK) { result.error = ret; return result; }
 
     unsigned char *decompressed = NULL;
@@ -51,8 +52,7 @@ mem_result compress_from_memory(const unsigned char *input, size_t input_size) {
     strm.avail_in = (uInt)input_size;
     strm.next_in = (Bytef *)input;
 
-    // 15 + 16 forces Gzip wrapper
-    int ret = deflateInit2(&strm, Z_BEST_COMPRESSION, Z_DEFLATED, 15 + 16, 8, Z_DEFAULT_STRATEGY);
+    int ret = deflateInit2(&strm, Z_BEST_COMPRESSION, Z_DEFLATED, GZIP_WINDOW_BITS, 8, Z_DEFAULT_STRATEGY);
     if (ret != Z_OK) { result.error = ret; return result; }
 
     unsigned char *compressed = NULL;
