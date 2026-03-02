@@ -59,10 +59,28 @@ int repack(char *in, char *out) {
 
 int main(int argc, char *argv[]) {
     if (argc < 4) {
-        printf("Usage: %s <e|r> <input> <output>\n", argv[0]);
+        printf("usage: %s <e|r> <input> <output>\n", argv[0]);
         return 1;
     }
-    if (argv[1][1] == 'e') return extract(argv[2], argv[3]);
-    if (argv[1][1] == 'r') return repack(argv[2], argv[3]);
+
+    // check both 0 and 1 to be safe
+    char mode = (argv[1][0] == '-') ? argv[1][1] : argv[1][0];
+
+    if(mode=='e'){
+	printf("starting extraction: %s -> %s\n", argv[2], argv[3]);
+	int result = extract(argv[2],argv[3]);
+	if(result==0) printf("extraction successful\n");
+	return result;
+    }
+
+    // 'r'epack || 'p'ack
+    if(mode == 'r' || mode == 'p') {
+	printf("starting repack: %s -> %s\n",argv[2],argv[3]);
+	int result = repack(argv[2],argv[3]);
+	if(result==0) printf("repack successful\n");
+	return result;
+    }
+
+    printf("unknown mode: %s. Use 'e' for extract or 'r' for repack.\n",argv[1]);
     return 1;
 }
